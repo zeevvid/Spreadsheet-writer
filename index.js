@@ -2,17 +2,24 @@ const { google } = require("googleapis");
 const express = require("express");
 const app = express();
 
-// 👈 MUST come before the route
+// Parse JSON body
 app.use(express.json());
 
+// 🔐 Load credentials from ENV instead of service-account.json
+const serviceAccount = {
+  client_email: process.env.GOOGLE_CLIENT_EMAIL,
+  // Render stores env vars as a single line string – convert \n to real newlines
+  private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+};
+
 const auth = new google.auth.GoogleAuth({
-  credentials: require("./service-account.json"),
+  credentials: serviceAccount,
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
 app.post("/append", async (req, res) => {
   try {
-    console.log("REQ BODY:", req.body); // 👈 debug
+    console.log("REQ BODY:", req.body);
 
     const { spreadsheetId, values } = req.body;
 
@@ -32,4 +39,6 @@ app.post("/append", async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("API ready on port 3000"));
+// ⚠️ MUST use process.env.PORT on Render
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("API ready on port", PORT));
